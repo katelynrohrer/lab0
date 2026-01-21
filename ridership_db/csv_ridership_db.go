@@ -3,8 +3,9 @@ package ridershipDB
 import (
 	"encoding/csv"
 	"fmt"
+	"io"
 	"os"
-
+	"strconv"
 )
 
 type CsvRidershipDB struct {
@@ -37,3 +38,54 @@ func (c *CsvRidershipDB) Open(filePath string) error {
 
 // TODO: some code goes here
 // Implement the remaining RidershipDB methods
+func (c *CsvRidershipDB) GetRidership(lineId string) ([]int64, error) {
+	// zero out all boarding metrics
+	boardings := make([]int64, 9)
+	for i := 0; i < 9; i++ {
+		boardings[i] = 0
+	}
+
+	// skip the header
+	_, err := c.csvReader.Read()
+	if err != nil { // return the error
+		fmt.Println(err)
+		return nil, err
+	}
+
+	for {
+		value, err := c.csvReader.Read()
+		if err == io.EOF { // end of file, end iteration
+			print("file end\n")
+			break
+		}
+		if err != nil { // return the error
+			fmt.Println(err)
+			return nil, err
+		}
+		if value[0] != lineId { // not the line we're looking for
+			continue
+		}
+
+		passengers, err := strconv.ParseInt(value[4], 10, 64)
+		if err != nil {
+			return nil, err
+		}
+
+		idx := c.idIdxMap[value[2]]
+		boardings[idx] += passengers
+	}
+
+	// restart reader to the top
+	_, err = c.csvFile.Seek(0, 0)
+	if err != nil {
+		return nil, err
+	}
+	c.csvReader = csv.NewReader(c.csvFile)
+	c.csvReader.FieldsPerRecord = 5
+
+	return boardings, nil
+}
+
+func (c *CsvRidershipDB) Close() error {
+	return c.csvFile.Close()
+}

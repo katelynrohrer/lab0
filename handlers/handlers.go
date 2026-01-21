@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/base64"
+	"fmt"
 	"html/template"
 	rdb "main/ridership_db"
 	"main/utils"
@@ -20,28 +21,25 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 
 	// instantiate ridershipDB
 	var db rdb.RidershipDB = &rdb.SqliteRidershipDB{} // Sqlite implementation
-	// var db rdb.RidershipDB = &rdb.CsvRidershipDB{} // CSV implementation
-
-	// TODO: some code goes here
+	//var db rdb.RidershipDB = &rdb.CsvRidershipDB{} // CSV implementation
 
 	// Get the chart data from RidershipDB
 	err := db.Open("mbta.sqlite")
 	if err != nil {
-		print("error 30")
+		fmt.Println(err)
 		return
 	}
 
-	// TODO: some code goes here
 	// Plot the bar chart using utils.GenerateBarChart. The function will return the bar chart
 	// as PNG byte slice. Convert the bytes to a base64 string, which is used to embed images in HTML.
 	values, err := db.GetRidership(selectedChart)
 	if err != nil {
-		print("error 39")
+		fmt.Println(err)
 		return
 	}
 	chart, err := utils.GenerateBarChart(values)
 	if err != nil {
-		print("error 44")
+		fmt.Println(err)
 		return
 	}
 	encodedChart := base64.StdEncoding.EncodeToString(chart)
@@ -53,18 +51,17 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	// Read and parse the HTML so we can use it as our web app template
 	html, err := os.ReadFile(templateFile)
 	if err != nil {
-		print("error 57")
+		fmt.Println(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	tmpl, err := template.New("line").Parse(string(html))
 	if err != nil {
-		print("error 63")
+		fmt.Println(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// TODO: some code goes here
 	// We now want to create a struct to hold the values we want to embed in the HTML
 	data := struct {
 		Image string
@@ -74,12 +71,11 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 		Chart: selectedChart,
 	}
 
-	// TODO: some code goes here
 	// Use tmpl.Execute to generate the final HTML output and send it as a response
 	// to the client's request.
 	err = tmpl.Execute(w, data)
 	if err != nil {
-		print("error 82")
+		fmt.Println(err)
 		return
 	}
 }
