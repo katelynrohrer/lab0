@@ -1,3 +1,9 @@
+/*
+Katelyn Rohrer
+CSC 560
+Lab 0
+*/
+
 package main
 
 import (

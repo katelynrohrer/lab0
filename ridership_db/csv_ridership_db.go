@@ -40,26 +40,23 @@ func (c *CsvRidershipDB) Open(filePath string) error {
 // Implement the remaining RidershipDB methods
 func (c *CsvRidershipDB) GetRidership(lineId string) ([]int64, error) {
 	// zero out all boarding metrics
-	boardings := make([]int64, 9)
-	for i := 0; i < 9; i++ {
+	boardings := make([]int64, c.num_intervals)
+	for i := 0; i < c.num_intervals; i++ {
 		boardings[i] = 0
 	}
 
 	// skip the header
 	_, err := c.csvReader.Read()
 	if err != nil { // return the error
-		fmt.Println(err)
 		return nil, err
 	}
 
 	for {
 		value, err := c.csvReader.Read()
 		if err == io.EOF { // end of file, end iteration
-			print("file end\n")
 			break
 		}
 		if err != nil { // return the error
-			fmt.Println(err)
 			return nil, err
 		}
 		if value[0] != lineId { // not the line we're looking for

@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/base64"
-	"fmt"
 	"html/template"
 	rdb "main/ridership_db"
 	"main/utils"
@@ -20,13 +19,12 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// instantiate ridershipDB
-	var db rdb.RidershipDB = &rdb.SqliteRidershipDB{} // Sqlite implementation
-	//var db rdb.RidershipDB = &rdb.CsvRidershipDB{} // CSV implementation
+	//var db rdb.RidershipDB = &rdb.SqliteRidershipDB{} // Sqlite implementation
+	var db rdb.RidershipDB = &rdb.CsvRidershipDB{} // CSV implementation
 
 	// Get the chart data from RidershipDB
-	err := db.Open("mbta.sqlite")
+	err := db.Open("../mbta.csv")
 	if err != nil {
-		fmt.Println(err)
 		return
 	}
 
@@ -34,12 +32,12 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	// as PNG byte slice. Convert the bytes to a base64 string, which is used to embed images in HTML.
 	values, err := db.GetRidership(selectedChart)
 	if err != nil {
-		fmt.Println(err)
 		return
 	}
+	db.Close()
+
 	chart, err := utils.GenerateBarChart(values)
 	if err != nil {
-		fmt.Println(err)
 		return
 	}
 	encodedChart := base64.StdEncoding.EncodeToString(chart)
@@ -51,13 +49,11 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	// Read and parse the HTML so we can use it as our web app template
 	html, err := os.ReadFile(templateFile)
 	if err != nil {
-		fmt.Println(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	tmpl, err := template.New("line").Parse(string(html))
 	if err != nil {
-		fmt.Println(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -75,7 +71,6 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	// to the client's request.
 	err = tmpl.Execute(w, data)
 	if err != nil {
-		fmt.Println(err)
 		return
 	}
 }
